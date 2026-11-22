@@ -1,7 +1,7 @@
 /**
- * example/app.js - A small Express application demonstrating error-snap.
+ * example/app.js - A small Express application demonstrating errormap.
  * 
- * This app shows how to use the error-snap package in an Express application:
+ * This app shows how to use the errormap package in an Express application:
  * - Successful routes return JSON responses
  * - AppError is used for custom errors with specific status codes
  * - The errorHandler middleware handles errors consistently

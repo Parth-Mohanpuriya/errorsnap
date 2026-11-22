@@ -1,5 +1,5 @@
 {
-  "name": "error-snap",
+  "name": "errormap",
   "version": "1.0.0",
   "description": "A simple error-handling npm package for Express applications",
   "main": "index.js",
@@ -17,5 +17,8 @@
     "express",
     "app-error"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "errormap": "^1.0.0"
+  }
 }

@@ -1,10 +1,10 @@
-# error-snap
+# errormap
 
 A simple error-handling npm package for Express applications. Help developers create custom errors, display readable error messages, and handle Express errors in one place.
 
 ## Why should developers use it?
 
-When building Express applications, error handling can become repetitive and inconsistent. error-snap provides a simple, consistent way to:
+When building Express applications, error handling can become repetitive and inconsistent. errormap provides a simple, consistent way to:
 
 - Create custom errors with proper status codes
 - Format errors for readable terminal output
@@ -22,7 +22,7 @@ When building Express applications, error handling can become repetitive and inc
 ## Installation
 
 ```bash
-npm install error-snap
+npm install errormap
 ```
 
 Or install locally from this repository:
@@ -35,7 +35,7 @@ npm install
 
 ```javascript
 const express = require("express");
-const { AppError, errorHandler, formatError } = require("error-snap");
+const { AppError, errorHandler, formatError } = require("errormap");
 
 // Create a custom error
 const error = new AppError("User not found", 404);
@@ -47,7 +47,7 @@ console.log(formatError(error));
 ## How to create a custom error
 
 ```javascript
-const { AppError } = require("error-snap");
+const { AppError } = require("errormap");
 
 // With message and status code
 const error = new AppError("User not found", 404);
@@ -66,7 +66,7 @@ The `AppError` class:
 
 ```javascript
 const express = require("express");
-const { errorHandler } = require("error-snap");
+const { errorHandler } = require("errormap");
 
 const app = express();
 
@@ -96,7 +96,7 @@ The `errorHandler` middleware:
 ## How to use formatError
 
 ```javascript
-const { formatError } = require("error-snap");
+const { formatError } = require("errormap");
 
 const error = new AppError("User not found", 404);
 const formatted = formatError(error);
@@ -122,7 +122,7 @@ See the `example/app.js` file for a complete demonstration of the package in use
 ### Running the example
 
 ```bash
-cd error-snap
+cd errormap
 npm install
 npm start
 ```

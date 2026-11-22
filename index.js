@@ -1,5 +1,5 @@
 /**
- * index.js - The main entry point for the error-snap package.
+ * index.js - The main entry point for the errormap package.
  * Exports the core error-handling utilities for use in Express applications.
  */
 
