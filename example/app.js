@@ -8,7 +8,7 @@
  */
 
 const express = require("express");
-const { AppError, errorHandler, formatError } = require("../index");
+const { AppError, errorHandler, formatError, asyncHandler } = require("../index");
 
 // Create Express app
 const app = express();
@@ -34,6 +34,11 @@ app.get("/error", (req, res, next) => {
     next(err);
   }
 });
+
+// Route: GET /async - Async route demonstrating asyncHandler without try/catch
+app.get("/async", asyncHandler(async (req, res) => {
+  throw AppError.notFound("Async user not found in database");
+}));
 
 // Route: GET /users - Throw an AppError with status code 404
 app.get("/users", (req, res, next) => {

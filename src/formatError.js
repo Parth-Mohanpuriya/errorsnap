@@ -16,7 +16,7 @@ function formatError(error) {
   // Build the formatted error message
   const formatted = `
 -------------------------------
-          ERROR SNAP
+           ERROR MAP
 -------------------------------
 Error: ${error.message}
 Status Code: ${error.statusCode}

@@ -16,24 +16,30 @@ function errorHandler(err, req, res, next) {
   console.error(formatError(err));
 
   // Handle already-sent responses using next(err)
-  // If the response was already sent, don't try to send another
   if (res.headersSent) {
     return next(err);
   }
 
   // Send a JSON response to the client
-  // Do not send stack traces to clients
-  // Return a generic message for unexpected errors in production
+  // Return a generic message for unexpected errors in production to avoid leaking sensitive information
+  const isProd = process.env.NODE_ENV === "production";
   const message =
-    process.env.NODE_ENV === "production" && statusCode >= 500
+    isProd && statusCode >= 500
       ? "Internal Server Error"
       : err.message || "Something went wrong";
 
-  res.status(statusCode).json({
+  const response = {
     success: false,
     message,
     statusCode,
-  });
+  };
+
+  // Include validation details if provided (unless masked in production 500s)
+  if (err.details && !(isProd && statusCode >= 500)) {
+    response.details = err.details;
+  }
+
+  res.status(statusCode).json(response);
 }
 
 module.exports = errorHandler;

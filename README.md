@@ -1,23 +1,19 @@
 # errormap
 
-A simple error-handling npm package for Express applications. Help developers create custom errors, display readable error messages, and handle Express errors in one place.
+A lightweight, production-ready error-handling npm package for Express applications. Create custom errors, eliminate async boilerplate, display formatted terminal logs, and handle Express errors in one place.
 
 ## Why should developers use it?
 
-When building Express applications, error handling can become repetitive and inconsistent. errormap provides a simple, consistent way to:
+When building Express applications, error handling can become repetitive and inconsistent. `errormap` provides a clean, unified standard:
 
-- Create custom errors with proper status codes
-- Format errors for readable terminal output
-- Handle errors in one place using Express middleware
-- Send consistent JSON error responses to clients
-- Avoid repeating error-handling code in every route
+- **Eliminate `try/catch` boilerplate** with `asyncHandler`
+- **Semantic HTTP errors** using `AppError` shortcuts (`.badRequest()`, `.notFound()`, etc.)
+- **Validation details support** for field-level errors
+- **Zero vulnerability risk**: 0 external dependencies
+- **Safe in production**: Automatically suppresses internal server stack traces to clients
+- **Built-in TypeScript declarations** (`index.d.ts`)
 
-## Features
-
-1. **Custom Error Class** (`AppError`) - Extends the built-in Error class with status code support
-2. **Error Formatter** (`formatError`) - Formats errors into readable terminal messages
-3. **Express Error Middleware** (`errorHandler`) - Handles errors consistently and sends JSON responses
-4. **Full Export** - All utilities exported from the main entry point
+---
 
 ## Installation
 
@@ -25,44 +21,57 @@ When building Express applications, error handling can become repetitive and inc
 npm install errormap
 ```
 
-Or install locally from this repository:
+---
 
-```bash
-npm install
-```
+## Features & API
 
-## Basic usage
+### 1. `asyncHandler` — Eliminate Async `try/catch`
+
+Wraps asynchronous Express route handlers to catch unhandled promise rejections automatically without repetitive `try/catch` blocks:
 
 ```javascript
-const express = require("express");
-const { AppError, errorHandler, formatError } = require("errormap");
+const { asyncHandler, AppError } = require("errormap");
 
-// Create a custom error
-const error = new AppError("User not found", 404);
-
-// Format for terminal display
-console.log(formatError(error));
+app.get("/users/:id", asyncHandler(async (req, res) => {
+  const user = await database.findUser(req.params.id);
+  if (!user) {
+    throw AppError.notFound("User not found");
+  }
+  res.json({ success: true, data: user });
+}));
 ```
 
-## How to create a custom error
+---
 
+### 2. `AppError` — Structured Custom Errors
+
+`AppError` extends JavaScript's built-in `Error` class and preserves the stack trace while adding HTTP status codes and optional details.
+
+#### Static Convenience Shortcuts:
 ```javascript
 const { AppError } = require("errormap");
 
-// With message and status code
-const error = new AppError("User not found", 404);
-
-// Without status code (defaults to 500)
-const error = new AppError("Something went wrong");
+throw AppError.badRequest("Invalid input data");         // 400
+throw AppError.unauthorized("Authentication required");  // 401
+throw AppError.forbidden("Access denied");               // 403
+throw AppError.notFound("Resource not found");           // 404
+throw AppError.conflict("Email already in use");         // 409
+throw AppError.internal("Unexpected database error");    // 500
 ```
 
-The `AppError` class:
-- Sets `error.name` to `"AppError"`
-- Stores the `message`
-- Stores the `statusCode` (defaults to 500)
-- Correctly captures the stack trace
+#### Field Validation Details:
+```javascript
+throw AppError.badRequest("Validation failed", [
+  { field: "email", error: "Valid email address required" },
+  { field: "password", error: "Password must be at least 8 characters" }
+]);
+```
 
-## How to use errorHandler
+---
+
+### 3. `errorHandler` — Central Express Middleware
+
+Mount `errorHandler` as the last middleware in your Express app:
 
 ```javascript
 const express = require("express");
@@ -70,90 +79,72 @@ const { errorHandler } = require("errormap");
 
 const app = express();
 
-// ... your routes ...
+// ... your route definitions ...
 
-// Add errorHandler as the final middleware
+// Mount as the final middleware:
 app.use(errorHandler);
 ```
 
-The `errorHandler` middleware:
-1. Checks if the error has a status code (uses 500 if not)
-2. Prints the formatted error in the terminal
-3. Sends a JSON response to the client
-4. Does not send stack traces to clients
-5. Returns a generic message in production for unexpected errors
-6. Handles already-sent responses using `next(err)`
-
-**Example JSON response:**
+#### Client JSON Response:
 ```json
 {
   "success": false,
-  "message": "User not found",
-  "statusCode": 404
+  "message": "Validation failed",
+  "statusCode": 400,
+  "details": [
+    { "field": "email", "error": "Valid email address required" }
+  ]
 }
 ```
 
-## How to use formatError
+*In production (`process.env.NODE_ENV === "production"`), status 500 errors are masked to `"Internal Server Error"` to protect sensitive infrastructure details.*
+
+---
+
+### 4. `formatError` — Terminal Logging Utility
 
 ```javascript
-const { formatError } = require("errormap");
+const { formatError, AppError } = require("errormap");
 
-const error = new AppError("User not found", 404);
-const formatted = formatError(error);
-
-console.log(formatted);
+console.log(formatError(AppError.notFound("Order #999 not found")));
 ```
 
 **Output:**
-```
+```text
 -------------------------------
-          ERROR SNAP
+           ERROR MAP
 -------------------------------
-Error: User not found
+Error: Order #999 not found
 Status Code: 404
 Time: 15:30:20
 -------------------------------
 ```
 
-## Example Express application
+---
 
-See the `example/app.js` file for a complete demonstration of the package in use.
+## Running Unit Tests
 
-### Running the example
+`errormap` includes zero-dependency unit tests powered by Node.js's native test runner (`node --test`):
 
 ```bash
-cd errormap
+npm test
+```
+
+---
+
+## Interactive Demo App
+
+A complete demonstration server with a web dashboard simulator is available in `errormap-demo-app`:
+
+```bash
+cd errormap-demo-app
 npm install
 npm start
 ```
+Then open `http://localhost:3000` to interactively trigger and test errors.
 
-The server will start on `http://localhost:3000`. Visit the following routes:
-
-- `GET /success` - Returns a successful JSON response
-- `GET /error` - Throws a normal JavaScript error (returns 500)
-- `GET /users` - Throws an AppError with status code 404
-- `GET /invalid` - Throws an AppError with status code 400
-
-## How to run the example
-
-1. Install dependencies: `npm install`
-2. Start the server: `npm start`
-3. Visit `http://localhost:3000` in your browser or use curl/Postman
-
-## Testing the package manually
-
-Verify these scenarios:
-
-- **Successful route works**: Visit `GET /success` - should return JSON with `success: true`
-- **Normal JavaScript errors return status 500**: Visit `GET /error` - should return 500 status
-- **AppError returns the supplied status code**: Visit `GET /users` - should return 404 status; `GET /invalid` - should return 400 status
-- **Error messages are correctly displayed in the terminal**: Check the terminal output where the server is running
-- **Stack traces are not exposed in API responses**: The JSON response should not contain stack trace information
-- **Production responses do not expose internal error messages**: Set `NODE_ENV=production` to test
-- **The server does not crash when an error occurs**: All errors should be handled gracefully
+---
 
 ## License
 
-MIT
-
-Built with JavaScript and Express. No unnecessary dependencies.
+MIT © Parth Mohanpuriya

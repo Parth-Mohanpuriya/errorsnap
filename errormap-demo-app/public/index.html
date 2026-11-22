@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>errormap — Express Error Handling Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --surface: #101726;
+      --surface-subtle: #162032;
+      --border: #1f2c42;
+      --border-focus: #3b82f6;
+      
+      --text: #f1f5f9;
+      --text-muted: #8b9bb4;
+      --text-dim: #5c6b84;
+
+      --blue: #38bdf8;
+      --blue-bg: rgba(56, 189, 248, 0.1);
+      --green: #34d399;
+      --green-bg: rgba(52, 211, 153, 0.1);
+      --yellow: #fbbf24;
+      --yellow-bg: rgba(251, 191, 36, 0.1);
+      --red: #f87171;
+      --red-bg: rgba(248, 113, 113, 0.1);
+      --purple: #c084fc;
+      --purple-bg: rgba(192, 132, 252, 0.1);
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.5;
+      padding: 32px 20px;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 1160px;
+      margin: 0 auto;
+    }
+
+    /* Top Navigation / Header */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #38bdf8, #3b82f6);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+      color: #090d16;
+    }
+
+    .brand-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-version {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 9999px;
+      color: var(--text-muted);
+    }
+
+    .nav-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 10px rgba(52, 211, 153, 0.6);
+    }
+
+    /* Hero / Intro */
+    .hero {
+      margin-bottom: 28px;
+    }
+
+    .hero h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+
+    .hero h1 span {
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      color: var(--text-muted);
+      font-size: 14px;
+      max-width: 640px;
+    }
+
+    /* Scenario Selector Pills */
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+    }
+
+    .scenarios-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .scenario-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+    }
+
+    .scenario-btn:hover {
+      border-color: var(--border-focus);
+      background: var(--surface-subtle);
+    }
+
+    .scenario-btn.active {
+      border-color: var(--blue);
+      background: var(--surface-subtle);
+      box-shadow: 0 0 0 1px var(--blue);
+    }
+
+    .scenario-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .scenario-method {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .scenario-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .scenario-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .scenario-feature {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Tag styles */
+    .tag-async .scenario-method { background: var(--blue-bg); color: var(--blue); }
+    .tag-async .scenario-code { color: var(--blue); }
+
+    .tag-400 .scenario-method { background: var(--yellow-bg); color: var(--yellow); }
+    .tag-400 .scenario-code { color: var(--yellow); }
+
+    .tag-401 .scenario-method { background: var(--purple-bg); color: var(--purple); }
+    .tag-401 .scenario-code { color: var(--purple); }
+
+    .tag-404 .scenario-method { background: var(--red-bg); color: var(--red); }
+    .tag-404 .scenario-code { color: var(--red); }
+
+    .tag-500 .scenario-method { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .tag-500 .scenario-code { color: #f87171; }
+
+    .tag-200 .scenario-method { background: var(--green-bg); color: var(--green); }
+    .tag-200 .scenario-code { color: var(--green); }
+
+    /* Main Dual Visualizer */
+    .visualizer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 820px) {
+      .visualizer-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-header {
+      padding: 12px 16px;
+      background: var(--surface-subtle);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-height: 44px;
+    }
+
+    .card-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-copy {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-size: 11px;
+      padding: 3px 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-copy:hover {
+      color: var(--text);
+      border-color: var(--text-dim);
+    }
+
+    .badge-status {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .badge-200 { background: var(--green-bg); color: var(--green); }
+    .badge-400 { background: var(--yellow-bg); color: var(--yellow); }
+    .badge-401 { background: var(--purple-bg); color: var(--purple); }
+    .badge-404 { background: var(--red-bg); color: var(--red); }
+    .badge-500 { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+    .card-body {
+      padding: 16px;
+      flex: 1;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      line-height: 1.6;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      background: #060911;
+    }
+
+    /* Terminal Window Dots */
+    .window-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+    }
+    .dot-red { background: #ef4444; }
+    .dot-yellow { background: #eab308; }
+    .dot-green { background: #22c55e; }
+
+    /* Code Snippet Card */
+    .snippet-container {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+
+    .snippet-body {
+      padding: 14px 18px;
+      background: #060911;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      line-height: 1.6;
+      color: #93c5fd;
+      overflow-x: auto;
+    }
+
+    /* Custom Error Builder (Interactive Tester) */
+    .builder-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      margin-bottom: 24px;
+    }
+
+    .builder-form {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .builder-select, .builder-input {
+      background: #060911;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      padding: 9px 12px;
+      font-size: 13px;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .builder-select:focus, .builder-input:focus {
+      border-color: var(--blue);
+    }
+
+    .builder-select {
+      min-width: 140px;
+    }
+
+    .builder-input {
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .btn-submit {
+      background: var(--blue);
+      color: #090d16;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 9px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+
+    .btn-submit:hover {
+      opacity: 0.9;
+    }
+
+    /* Features Grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+
+    .feature-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px;
+    }
+
+    .feature-item h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--blue);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .feature-item p {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* JSON syntax highlighting simulation */
+    .json-key { color: #38bdf8; }
+    .json-string { color: #a7f3d0; }
+    .json-number { color: #fde047; }
+    .json-boolean { color: #c084fc; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    
+    <!-- Navigation -->
+    <nav>
+      <div class="brand">
+        <div class="brand-icon">E</div>
+        <div class="brand-title">errormap</div>
+        <span class="brand-version">v1.1.0</span>
+      </div>
+      <div class="nav-status">
+        <span class="status-dot"></span>
+        <span>Demo Server Online</span>
+      </div>
+    </nav>
+
+    <!-- Intro -->
+    <div class="hero">
+      <h1>Structured Express <span>Error Handling</span></h1>
+      <p>Test real-world scenarios live: async promise catches, semantic HTTP errors, field validation details, and secure terminal logging.</p>
+    </div>
+
+    <!-- Scenarios -->
+    <div class="section-label">Select Scenario</div>
+    <div class="scenarios-grid">
+      
+      <button class="scenario-btn tag-async active" onclick="selectScenario('async')">
+        <div class="scenario-header">
+          <span class="scenario-method">GET</span>
+          <span class="scenario-code">ASYNC</span>
+        </div>
+        <div class="scenario-title">asyncHandler</div>
+        <div class="scenario-feature">Zero try/catch wrapper</div>
+      </button>
+
+      <button class="scenario-btn tag-400" onclick="selectScenario('validation')">
+        <div class="scenario-header">
+          <span class="scenario-method">POST</span>
+          <span class="scenario-code">400</span>
+        </div>
+        <div class="scenario-title">Validation Details</div>
+        <div class="scenario-feature">AppError.badRequest()</div>
+      </button>
+
+      <button class="scenario-btn tag-401" onclick="selectScenario('auth')">
+        <div class="scenario-header">
+          <span class="scenario-method">GET</span>
+          <span class="scenario-code">401</span>
+        </div>
+        <div class="scenario-title">Authentication</div>
+        <div class="scenario-feature">AppError.unauthorized()</div>
+      </button>
+
+      <button class="scenario-btn tag-404" onclick="selectScenario('notfound')">
+        <div class="scenario-header">
+          <span class="scenario-method">GET</span>
+          <span class="scenario-code">404</span>
+        </div>
+        <div class="scenario-title">Resource Missing</div>
+        <div class="scenario-feature">AppError.notFound()</div>
+      </button>
+
+      <button class="scenario-btn tag-500" onclick="selectScenario('crash')">
+        <div class="scenario-header">
+          <span class="scenario-method">GET</span>
+          <span class="scenario-code">500</span>
+        </div>
+        <div class="scenario-title">Server Exception</div>
+        <div class="scenario-feature">Protected production mask</div>
+      </button>
+
+      <button class="scenario-btn tag-200" onclick="selectScenario('success')">
+        <div class="scenario-header">
+          <span class="scenario-method">GET</span>
+          <span class="scenario-code">200</span>
+        </div>
+        <div class="scenario-title">Success Response</div>
+        <div class="scenario-feature">Standard JSON flow</div>
+      </button>
+
+    </div>
+
+    <!-- Express Code Snippet Banner -->
+    <div class="snippet-container">
+      <div class="card-header">
+        <div class="card-title">⚡ Express Route Implementation</div>
+        <div id="routeEndpoint" style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim);">
+          GET /api/async-user
+        </div>
+      </div>
+      <div id="codeSnippet" class="snippet-body">// Loading implementation...</div>
+    </div>
+
+    <!-- Dual Output Visualizer -->
+    <div class="visualizer-grid">
+      
+      <!-- Client JSON Response -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🌐 Client JSON Response</div>
+          <div class="card-actions">
+            <span id="badgeStatus" class="badge-status badge-404">404 Not Found</span>
+            <button class="btn-copy" onclick="copyClientResponse()">Copy</button>
+          </div>
+        </div>
+        <div id="clientOutput" class="card-body">Loading...</div>
+      </div>
+
+      <!-- Server Terminal Mockup -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🖥️ Server Terminal (formatError)</div>
+          <div class="window-dots">
+            <div class="dot dot-red"></div>
+            <div class="dot dot-yellow"></div>
+            <div class="dot dot-green"></div>
+          </div>
+        </div>
+        <div id="terminalOutput" class="card-body" style="color: #38bdf8;">Loading...</div>
+      </div>
+
+    </div>
+
+    <!-- Live Custom Error Builder Component -->
+    <div class="builder-card">
+      <div class="section-label" style="margin-bottom: 4px;">🛠️ Interactive Custom Error Tester</div>
+      <p style="font-size: 12px; color: var(--text-muted);">Dispatch your own custom error payload through errormap's middleware:</p>
+      
+      <form class="builder-form" onsubmit="handleCustomSubmit(event)">
+        <select id="builderStatus" class="builder-select">
+          <option value="400">400 Bad Request</option>
+          <option value="401">401 Unauthorized</option>
+          <option value="403">403 Forbidden</option>
+          <option value="404">404 Not Found</option>
+          <option value="409">409 Conflict</option>
+          <option value="500">500 Server Error</option>
+        </select>
+        <input id="builderMessage" class="builder-input" type="text" placeholder="Custom error message (e.g. Account suspended)" required value="Subscription expired or cancelled">
+        <button type="submit" class="btn-submit">Dispatch Error</button>
+      </form>
+    </div>
+
+    <!-- Core Features Grid -->
+    <div class="section-label">Package Architecture</div>
+    <div class="features-grid">
+      <div class="feature-item">
+        <h3><code>asyncHandler</code></h3>
+        <p>Wraps asynchronous route handlers to catch unhandled Promise rejections without manual try/catch.</p>
+      </div>
+      <div class="feature-item">
+        <h3><code>AppError</code> Helpers</h3>
+        <p>Semantic factory shortcuts (<code>.badRequest()</code>, <code>.notFound()</code>) with validation details support.</p>
+      </div>
+      <div class="feature-item">
+        <h3><code>errorHandler</code></h3>
+        <p>Express error middleware ensuring uniform JSON responses while preventing stack leaks in production.</p>
+      </div>
+      <div class="feature-item">
+        <h3><code>formatError</code></h3>
+        <p>Instant terminal logging utility with readable ASCII boundaries and execution timestamps.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Scenario definitions with real code snippets
+    const SCENARIOS = {
+      async: {
+        method: 'GET',
+        endpoint: '/api/async-user',
+        code: `// Express async route wrapped with errormap's asyncHandler\napp.get("/api/async-user", asyncHandler(async (req, res) => {\n  await database.findUser(); // No try/catch needed!\n  throw AppError.notFound("User profile not found in database", { userId: "usr_8231" });\n}));`,
+        body: null
+      },
+      validation: {
+        method: 'POST',
+        endpoint: '/api/checkout',
+        code: `// Validation error with field details array\napp.post("/api/checkout", (req, res, next) => {\n  if (!req.body.items?.length) {\n    return next(AppError.badRequest("Cart validation failed", [\n      { field: "items", error: "Cart cannot be empty" },\n      { field: "coupon", error: "Coupon code expired" }\n    ]));\n  }\n});`,
+        body: { items: [] }
+      },
+      auth: {
+        method: 'GET',
+        endpoint: '/api/admin',
+        code: `// Authentication failure using semantic shortcut\napp.get("/api/admin", (req, res, next) => {\n  if (!req.headers.authorization) {\n    return next(AppError.unauthorized("Authorization token is missing or expired."));\n  }\n});`,
+        body: null
+      },
+      notfound: {
+        method: 'GET',
+        endpoint: '/api/orders/999',
+        code: `// Missing resource using AppError.notFound()\napp.get("/api/orders/:id", (req, res, next) => {\n  return next(AppError.notFound(\`Order #\${req.params.id} does not exist in the database.\`));\n});`,
+        body: null
+      },
+      crash: {
+        method: 'GET',
+        endpoint: '/api/crash',
+        code: `// Unhandled exception masked safely in production\napp.get("/api/crash", (req, res, next) => {\n  throw new Error("Database connection pool exhausted unexpectedly");\n  // In production (NODE_ENV=production), status 500 details are masked to protect secrets\n});`,
+        body: null
+      },
+      success: {
+        method: 'GET',
+        endpoint: '/api/products',
+        code: `// Standard successful response\napp.get("/api/products", (req, res) => {\n  res.status(200).json({\n    success: true,\n    message: "Products fetched successfully",\n    data: [{ id: 1, name: "Mechanical Keyboard", price: 99.99 }]\n  });\n});`,
+        body: null
+      }
+    };
+
+    let currentResponseData = null;
+
+    async function executeRequest(method, endpoint, body = null) {
+      const clientEl = document.getElementById('clientOutput');
+      const terminalEl = document.getElementById('terminalOutput');
+      const badgeStatus = document.getElementById('badgeStatus');
+
+      clientEl.textContent = 'Executing ' + method + ' ' + endpoint + '...';
+
+      try {
+        const options = {
+          method,
+          headers: { 'Content-Type': 'application/json' }
+        };
+        if (body) options.body = JSON.stringify(body);
+
+        const res = await fetch(endpoint, options);
+        const data = await res.json();
+        currentResponseData = data;
+
+        // Badge update
+        badgeStatus.textContent = `${res.status} ${res.statusText || (res.status === 200 ? 'OK' : 'Error')}`;
+        badgeStatus.className = `badge-status badge-${res.status >= 500 ? '500' : res.status >= 400 ? (res.status === 404 ? '404' : res.status === 401 ? '401' : '400') : '200'}`;
+
+        // Pretty JSON
+        clientEl.textContent = JSON.stringify(data, null, 2);
+
+        // Fetch formatError preview
+        if (data.statusCode || res.status >= 400) {
+          const previewRes = await fetch(`/api/format-preview?message=${encodeURIComponent(data.message || 'Error')}&statusCode=${data.statusCode || res.status}`);
+          const preview = await previewRes.json();
+          terminalEl.textContent = preview.formatted;
+        } else {
+          terminalEl.textContent = `[HTTP] ${method} ${endpoint} - Status: 200 OK\nRequest resolved successfully. No error generated.`;
+        }
+      } catch (err) {
+        clientEl.textContent = 'Network error: ' + err.message;
+        terminalEl.textContent = 'Error connecting to demo server.';
+      }
+    }
+
+    function selectScenario(key) {
+      document.querySelectorAll('.scenario-btn').forEach(btn => btn.classList.remove('active'));
+      event?.currentTarget?.classList.add('active');
+
+      const scenario = SCENARIOS[key];
+      if (!scenario) return;
+
+      document.getElementById('routeEndpoint').textContent = `${scenario.method} ${scenario.endpoint}`;
+      document.getElementById('codeSnippet').textContent = scenario.code;
+
+      executeRequest(scenario.method, scenario.endpoint, scenario.body);
+    }
+
+    async function handleCustomSubmit(e) {
+      e.preventDefault();
+      const statusCode = document.getElementById('builderStatus').value;
+      const message = document.getElementById('builderMessage').value;
+
+      document.querySelectorAll('.scenario-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('routeEndpoint').textContent = `POST /api/custom-error (${statusCode})`;
+      document.getElementById('codeSnippet').textContent = `// Custom dispatched error\nthrow new AppError("${message}", ${statusCode});`;
+
+      executeRequest('POST', '/api/custom-error', { statusCode, message });
+    }
+
+    function copyClientResponse() {
+      if (!currentResponseData) return;
+      navigator.clipboard.writeText(JSON.stringify(currentResponseData, null, 2)).then(() => {
+        const btn = document.querySelector('.btn-copy');
+        const oldText = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = oldText; }, 1500);
+      });
+    }
+
+    // Default load with async scenario
+    window.addEventListener('DOMContentLoaded', () => {
+      selectScenario('async');
+    });
+  </script>
+</body>
+</html>
