@@ -1,0 +1,21 @@
+{
+  "name": "error-snap",
+  "version": "1.0.0",
+  "description": "A simple error-handling npm package for Express applications",
+  "main": "index.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "scripts": {
+    "start": "node example/app.js",
+    "test": "echo \"Error: no test specified\" && exit 0"
+  },
+  "keywords": [
+    "error",
+    "handling",
+    "express",
+    "app-error"
+  ],
+  "license": "MIT"
+}
