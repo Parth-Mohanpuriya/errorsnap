@@ -132,16 +132,14 @@ npm test
 
 ---
 
-## Interactive Demo App
+## Example Application
 
-A complete demonstration server with a web dashboard simulator is available in `errormap-demo-app`:
+A demonstration Express server is included in `example/app.js`:
 
 ```bash
-cd errormap-demo-app
-npm install
 npm start
 ```
-Then open `http://localhost:3000` to interactively trigger and test errors.
+The server will start on `http://localhost:3000` with example routes demonstrating `asyncHandler`, `AppError.notFound()`, and `errorHandler`.
 
 ---
 
